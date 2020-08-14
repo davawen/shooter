@@ -1,0 +1,15 @@
+{
+  "name": "shooter",
+  "version": "1.0.0",
+  "description": "A shooter",
+  "main": "index.js",
+  "scripts": {
+    "test": "start index.js"
+  },
+  "author": "davawen, kamagyu",
+  "license": "ISC",
+  "dependencies": {
+    "node": "^14.8.0",
+    "socket.io": "^2.3.0"
+  }
+}
