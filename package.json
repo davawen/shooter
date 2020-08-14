@@ -4,7 +4,7 @@
   "description": "A shooter",
   "main": "index.js",
   "scripts": {
-    "test": "start index.js"
+    "start": "node index.js"
   },
   "author": "davawen, kamagyu",
   "license": "ISC",
