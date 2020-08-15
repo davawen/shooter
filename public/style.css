@@ -30,3 +30,24 @@ p {
     font-family: "Montserrat";
     font-weight: 400;
 }
+
+h1 {
+    color: black;
+    font-size: xx-large;
+    font-family: "Montserrat";
+    font-weight: 1000;
+}
+
+h2 {
+    color: black;
+    font-size: x-large;
+    font-family: "Montserrat";
+    font-weight: 800;
+}
+
+h3 {
+    color: black;
+    font-size: large;
+    font-family: "Montserrat";
+    font-weight: 600;
+}
