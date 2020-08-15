@@ -3,8 +3,12 @@ let socket, socketId;
 
 let position;
 
+let nameInput;
+
 function setup() {
 	createCanvas(800, 800);
+	
+	
 	
 	socket = io.connect();
 	
@@ -51,7 +55,6 @@ function draw() {
 		p.pos.y += y*5;
 		
 		socket.emit('position', p.pos);
-		
 	}
 	
 	//#endregion
