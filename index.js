@@ -16,9 +16,9 @@ io.sockets.on('connection',
     function(socket)
     {
         numUsers++;
-        users[socket.id] = {pos: {x: 400, y:400}};
+        users[socket.id] = {pos: {x: 400, y:400}, name: "", health: 100};
         
-        io.emit('newConnection', users);
+        io.emit('users', users);
         
         socket.on('position',
             function(data)
@@ -28,11 +28,29 @@ io.sockets.on('connection',
             }
         );
         
+        socket.on('sendName',
+            function(data)
+            {
+                users[socket.id].name = data;
+                socket.broadcast.emit('sendName', {'id': socket.id, 'name': data});
+            }
+        );
+        
+        socket.on('hit',
+            function(data)
+            {
+                users[data].health -= 10;
+                socket.broadcast.emit('hit', data);
+            }
+        );
+        
         socket.on('disconnect',
             function()
             {
                 delete users[socket.id];
                 numUsers--;
+                
+                io.emit('users', users);
             }
         );
     }
