@@ -60,8 +60,7 @@ function draw() {
 	fill(255);
 	textSize(16)
 	
-	var scoreboard = keyIsDown(222);
-	var length = Object.keys(users).length;
+	
 	
 	var index = 0;
 	for(id in users)
@@ -77,26 +76,11 @@ function draw() {
 		fill(255);
 		rect(p.pos.x - 20, p.pos.y + 15, p.health/100 * 40, 10);
 		
-		if(scoreboard)
-		{
-			push()
-			
-			var _y = height/2 - (length - (index - length/2))*30;
-			
-			fill(255, 0.7);
-			rect(width/2 - 60, _y, 120, 30);
-			
-			fill(0);
-			text(p.name + " - " + p.kills + " / " + p.deaths, width/2 - 55, _y+7);
-			
-			pop();
-		}
-		
 		index++;
 	}
 	
 	if(reload > 0) reload--;
-	else if(mouseIsPressed)
+	else if(mouseIsPressed && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height)
 	{
 		stroke(0);
 		strokeWeight(3);
@@ -139,7 +123,7 @@ function draw() {
 			p.pos.y += y*5;
 			
 			socket.emit('position', p.pos);
-		}
+		}	
 		
 		if(p.health <= 0)
 		{
@@ -153,16 +137,47 @@ function draw() {
 		}
 	}
 	
+	var scoreboard = keyIsDown(222);
+	
+	if(scoreboard)
+	{
+		textAlign(LEFT, TOP);
+		noStroke();
+		
+		var length = index;
+		index = 0;
+		
+		var str, w;
+		for(id in users)
+		{
+			p = users[id];
+			
+			var _y = height/2 + (index - length/2)*30;
+			
+			str = p.name + " - " + p.kills + " / " + p.deaths;
+			w = textWidth(str);
+			
+			fill(255, 160);
+			rect(width/2 - w/2 - 5, _y, w+10, 30);
+			
+			fill(0);
+			text(str, width/2 - w/2, _y+7);
+			
+			index++;
+		}
+	}
+}
+
+function setName(name)
+{
+	users[socket.id].name = name;
+	socket.emit('sendName', name);
 }
 
 function keyPressed()
 {
 	if(keyCode == ENTER)
-	{
-		users[socket.id].name = nameInput.value();
-		
-		socket.emit('sendName', nameInput.value());
-	}
+		setName(nameInput.value());
 }
 
 function lineCircle(x1, y1, x2, y2, cx, cy, r)
