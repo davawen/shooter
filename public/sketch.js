@@ -1,12 +1,13 @@
 let users = {};
-let socket, socketId;
+let socket;
 
 let position;
 
 let cnv;
 let nameInput;
 
-let clicked = false;
+let reload = 5;
+let attacker;
 
 function setup() {
 	cnv = createCanvas(800, 800);
@@ -23,29 +24,31 @@ function setup() {
 		function(data)
 		{
 			users = data;
-			
-			socketId = socket.id;
 		}
 	);
 	
 	socket.on('position',
 		function(data)
 		{
-			users[data.id].pos = data.pos;
+			users[data[0]].pos = data[1];
 		}
 	);
 	
 	socket.on('sendName',
 		function(data)
 		{
-			users[data.id].name = data.name;
+			users[data[0]].name = data[1];
 		}
 	);
 	
 	socket.on('hit',
 		function(data)
 		{
-			users[data].health -= 10;
+			users[data[0]].health -= 10;
+			if(data[0] == socket.id)
+			{
+				attacker = data[1];
+			}
 		}
 	);
 }
@@ -55,6 +58,10 @@ function draw() {
 	
 	noStroke();
 	fill(255);
+	textSize(16)
+	
+	var scoreboard = keyIsDown(222);
+	var length = Object.keys(users).length;
 	
 	var index = 0;
 	for(id in users)
@@ -64,17 +71,37 @@ function draw() {
 		circle(p.pos.x, p.pos.y, 20);
 		text(p.name, 5, 15 + index*20);
 		
-		rect(p.pos.x - 20, p.pos.y + 15, p.health/100*40, 10);
+		fill(0);
+		rect(p.pos.x - 20, p.pos.y + 15, 40, 10);
+		
+		fill(255);
+		rect(p.pos.x - 20, p.pos.y + 15, p.health/100 * 40, 10);
+		
+		if(scoreboard)
+		{
+			push()
+			
+			var _y = height/2 - (length - (index - length/2))*30;
+			
+			fill(255, 0.7);
+			rect(width/2 - 60, _y, 120, 30);
+			
+			fill(0);
+			text(p.name + " - " + p.kills + " / " + p.deaths, width/2 - 55, _y+7);
+			
+			pop();
+		}
 		
 		index++;
 	}
 	
-	if(clicked)
+	if(reload > 0) reload--;
+	else if(mouseIsPressed)
 	{
 		stroke(0);
 		strokeWeight(3);
 		
-		var p = users[socketId];
+		var p = users[socket.id];
 		
 		var angle = createVector(mouseX - p.pos.x, mouseY - p.pos.y).heading();
 		var x = p.pos.x + cos(angle)* 1132;
@@ -84,47 +111,55 @@ function draw() {
 		
 		for(id in users)
 		{
-			if(id != socketId)
+			if(id != socket.id)
 			{
 				var op = users[id];
 				
 				if(lineCircle(p.pos.x, p.pos.y, x, y, op.pos.x, op.pos.y, 10))
 				{
-					socket.emit('hit', id);
+					socket.emit('hit', [id, socket.id]);
 					users[id].health -= 10;
 				}
 			}
 		}
 		
-		clicked = false;
+		reload = 5;
 	}
 	
-	if(socketId)
+	var p = users[socket.id];
+	if(p)
 	{
 		var x = keyIsDown(68) - keyIsDown(65);
 		var y = keyIsDown(83) - (keyIsDown(90) || keyIsDown(87));
 		
 		if(x || y)
 		{
-			var p = users[socketId];
+			
 			p.pos.x += x*5;
 			p.pos.y += y*5;
 			
 			socket.emit('position', p.pos);
 		}
+		
+		if(p.health <= 0)
+		{
+			socket.emit('died', attacker);
+			p.pos.x = 400;
+			p.pos.y = 400;
+			p.health = 100;
+			
+			p.deaths++;
+			users[attacker].kills++;
+		}
 	}
-}
-
-function mousePressed()
-{
-	clicked = true;
+	
 }
 
 function keyPressed()
 {
 	if(keyCode == ENTER)
 	{
-		users[socketId].name = nameInput.value();
+		users[socket.id].name = nameInput.value();
 		
 		socket.emit('sendName', nameInput.value());
 	}
@@ -152,7 +187,7 @@ function lineCircle(x1, y1, x2, y2, cx, cy, r)
 		var t2 = (-b + discriminant)/(2*a);
 		
 		if(t1 >= 0 && t1 <= 1)
-			return true; // -o-> and -|-> |
+			return true; // -|--|-> or -|-> |
 			
 		if(t2 >= 0 && t2 <= 1)
 			return true; // | -|->

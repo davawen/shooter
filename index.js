@@ -16,7 +16,7 @@ io.sockets.on('connection',
     function(socket)
     {
         numUsers++;
-        users[socket.id] = {pos: {x: 400, y:400}, name: "", health: 100};
+        users[socket.id] = {pos: {x: 400, y:400}, name: "", health: 100, kills: 0, deaths: 0};
         
         io.emit('users', users);
         
@@ -24,7 +24,7 @@ io.sockets.on('connection',
             function(data)
             {
                 users[socket.id].pos = data;
-                socket.broadcast.emit('position', {'id': socket.id, 'pos': data});
+                socket.broadcast.emit('position', [socket.id, data]);
             }
         );
         
@@ -32,15 +32,31 @@ io.sockets.on('connection',
             function(data)
             {
                 users[socket.id].name = data;
-                socket.broadcast.emit('sendName', {'id': socket.id, 'name': data});
+                socket.broadcast.emit('sendName', [socket.id, data]);
             }
         );
         
         socket.on('hit',
             function(data)
             {
-                users[data].health -= 10;
+                users[data[0]].health -= 10;
                 socket.broadcast.emit('hit', data);
+            }
+        );
+        
+        socket.on('died',
+            function(data)
+            {
+                var p = users[socket.id];
+                
+                p.pos.x = 400;
+                p.pos.y = 400;
+                p.health = 100;
+                
+                p.deaths++;
+                users[data].kills++;
+                
+                socket.broadcast.emit('users', users);
             }
         );
         
