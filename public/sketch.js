@@ -6,18 +6,30 @@ let position;
 let cnv;
 let nameInput;
 
-let reload = 5;
+let visibility = true;
 
-let map;
+let reloading = 0;
+let reload = 5;
+let ammo = 30;
+
+
+let weapon;
+
+let map, weapons;
+
 
 function preload()
 {
-	map = loadJSON('maps/map.json');
+	map = loadJSON('settings/map.json');
+	weapons = loadJSON('settings/weapons.json');
 }
 
 function setup()
 {
 	map = Object.values(map);
+	weapons = Object.values(weapons);
+	
+	weapon = weapons[0];
 	
 	cnv = createCanvas(800, 800);
 	cnv.x = cnv.position().x;
@@ -26,6 +38,8 @@ function setup()
 	nameInput = createInput("");
 	nameInput.position(cnv.x, cnv.y-23);
 	nameInput.size(200);
+	
+	//#region Networking
 	
 	socket = io.connect();
 	
@@ -70,6 +84,8 @@ function setup()
 			users[data[1]].kills++;
 		}
 	);
+	
+	//#endregion
 }
 
 function draw()
@@ -79,87 +95,128 @@ function draw()
 	noStroke();
 	fill(255);
 	textSize(16)
-	
+
 	map.forEach(
-		function (o)
+		function (_r)
 		{
-			rect(o.x, o.y, o.w, o.h);
+			rect(_r.x, _r.y, _r.w, _r.h);
 		}
 	);
 	
+	var p = users[socket.id];
+	
+	if(p)
+	{
+		var _x = keyIsDown(68) - keyIsDown(65);
+		var _y = keyIsDown(83) - (keyIsDown(90) || keyIsDown(87));
+
+		if (_x || _y)
+		{
+			_x = p.pos.x + _x * 5 - 10;
+			_y = p.pos.y + _y * 5 - 10;
+			
+			var _col = false;
+			
+			for (i = 0; i < map.length; i++)
+			{
+				if(!rectRect(_x, _y, 20, 20, map[i])) continue;
+				
+				_col = true;
+				break;
+			}
+			
+			if(!_col)
+			{
+				p.pos.x = _x + 10;
+				p.pos.y = _y + 10;
+				
+				socket.emit('position', p.pos);
+			}
+		}
+		
+		var angle = createVector(mouseX - p.pos.x, mouseY - p.pos.y).heading();
+		var x = cos(angle);
+		var y = sin(angle);
+
+		stroke(0);
+		strokeWeight(3);
+		line(p.pos.x, p.pos.y, p.pos.x + x * 15, p.pos.y + y * 15);
+	}
+	
+	ellipseMode(RADIUS);
 	var index = 0;
 	for(id in users)
 	{
-		var p = users[id];
+		var op = users[id];
 		
-		circle(p.pos.x, p.pos.y, 20);
-		text(p.name, 5, 15 + index*20);
+		circle(op.pos.x, op.pos.y, 10);
+		text(op.name, 5, 15 + index*20);
 		
 		fill(0);
-		rect(p.pos.x - 20, p.pos.y + 15, 40, 10);
+		rect(op.pos.x - 20, op.pos.y + 15, 40, 10);
 		
 		fill(255);
-		rect(p.pos.x - 20, p.pos.y + 15, p.health/100 * 40, 10);
+		rect(op.pos.x - 20, op.pos.y + 15, op.health/100 * 40, 10);
 		
 		index++;
 	}
 	
-	if(reload > 0) reload--;
-	else if(mouseIsPressed && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height)
+	//#region GUNZZ !!1!1!1
+	
+	if(reloading > 0) reloading--;
+	else if(reloading == 0)
 	{
-		strokeWeight(3);
+		ammo = weapon.ammo;
+		reloading = -1;
+	}
+	
+	if(reload > 0) reload--;
+	else if(mouseIsPressed && ammo > 0 && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height)
+	{
+		ammo--;
 		
-		var p = users[socket.id];
+		x *= 1366;
+		y *= 1366;
 		
-		var angle = createVector(mouseX - p.pos.x, mouseY - p.pos.y).heading();
-		var x = p.pos.x + cos(angle)* 1132;
-		var y = p.pos.y + sin(angle)* 1132;
+		x += p.pos.x;
+		y += p.pos.y;
 		
-		stroke(0);
+		var collision = false;
+		
 		for(i = 0; i < map.length; i++)
 		{
-			var o = map[i];
+			var _r = map[i];
 			
-			if(!lineRect(p.pos.x, p.pos.y, x, y, o)) continue;
-			
-			stroke(255, 0, 0);
-			break;
+			var _col = lineRect(p.pos.x, p.pos.y, x, y, _r);
+			if(_col)
+			{
+				collision = {};
+				break;
+			};
 		}
 		
-		line(p.pos.x, p.pos.y, x, y);
-		
-		for(id in users)
+		if(!collision)
 		{
-			if(id != socket.id)
+			for (id in users)
 			{
-				var op = users[id];
-				
-				if(lineCircle(p.pos.x, p.pos.y, x, y, op.pos.x, op.pos.y, 10))
+				if (id != socket.id)
 				{
-					socket.emit('hit', id);
-					users[id].health -= 10;
+					var op = users[id];
+
+					if (lineCircle(p.pos.x, p.pos.y, x, y, op.pos.x, op.pos.y, 10))
+					{
+						socket.emit('hit', id);
+						users[id].health -= weapon.damage;
+					}
 				}
 			}
 		}
 		
-		reload = 0;
+		reload = weapon.reload;
 	}
 	
-	var p = users[socket.id];
-	if(p)
-	{
-		var x = keyIsDown(68) - keyIsDown(65);
-		var y = keyIsDown(83) - (keyIsDown(90) || keyIsDown(87));
-		
-		if(x || y)
-		{
-			
-			p.pos.x += x*5;
-			p.pos.y += y*5;
-			
-			socket.emit('position', p.pos);
-		}	
-	}
+	//#endregion
+	//#region UI
 	
 	var scoreboard = keyIsDown(222);
 	
@@ -190,6 +247,41 @@ function draw()
 			index++;
 		}
 	}
+
+	stroke(255);
+	strokeWeight(2);
+	noFill();
+	
+	rect(width - 35, height - 55, 30, 50);
+	
+	fill(255);
+	noStroke();
+	
+	rect(width - 35, height - 5, 30, -(1 - reload / weapon.reload) * 50);
+	
+	
+	
+	if(reloading > 0)
+	{
+		if(frameCount % 10 == 0)
+		{
+			visibility = !visibility;
+		}
+	}
+	else visibility = true;
+	
+	if(visibility)
+	{
+		textSize(28);
+		textAlign(RIGHT, TOP);
+
+		stroke(0);
+
+		text(ammo, width - 40, height - 55);
+	}
+	
+	
+	//#endregion
 }
 
 function setName(name)
@@ -202,6 +294,14 @@ function keyPressed()
 {
 	if(keyCode == ENTER)
 		setName(nameInput.value());
+	else if(keyCode == 82)
+		reloading = weapon.reloading;
+		
+}
+
+function clamp(value, minimum, maximum)
+{
+	return max(min(value, maximum), minimum);
 }
 
 function lineCircle(x1, y1, x2, y2, cx, cy, r)
@@ -273,4 +373,14 @@ function lineRect(x1, y1, x2, y2, r) {
 	
 	var bottom = lineLine(x1, y1, x2, y2, r.x, r.y + r.h, r.x + r.w, r.y + r.h);
 	return bottom;
+}
+
+function rectRect(r1x, r1y, r1w, r1h, r2){
+
+	// are the sides of one rectangle touching the other?
+
+	return r1x + r1w >= r2.x        &&    // r1 right edge past r2 left
+		   r1y + r1h >= r2.y        &&    // r1 top edge past r2 bottom
+		   r1x       <= r2.x + r2.w &&    // r1 left edge past r2 right
+		   r1y       <= r2.y + r2.h       // r1 bottom edge past r2 top
 }
