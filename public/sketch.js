@@ -320,7 +320,7 @@ function draw()
 		text(ammo, width - 40, height - 55);
 	}
 	
-	image(crosshair, mouseX-4, mouseY-4);
+	image(crosshair, mouseX-11, mouseY-12);
 	
 	//#endregion
 }
