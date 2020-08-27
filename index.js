@@ -39,7 +39,7 @@ io.sockets.on('connection',
         socket.on('hit',
             function(data)
             {
-                var u = users[data[0]];
+                var u = users[data];
                 u.health -= 10;
                 
                 if(u.health <= 0)
@@ -49,9 +49,9 @@ io.sockets.on('connection',
                     u.health = 100;
                     
                     u.deaths++;
-                    users[data[1]].kills++;
+                    users[socket.id].kills++;
                     
-                    io.emit('death', [data[0], data[1]]);
+                    io.emit('death', [data, socket.id]);
                 }
                 else socket.broadcast.emit('hit', data);
             }

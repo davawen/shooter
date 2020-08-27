@@ -7,9 +7,18 @@ let cnv;
 let nameInput;
 
 let reload = 5;
-let attacker;
 
-function setup() {
+let map;
+
+function preload()
+{
+	map = loadJSON('maps/map.json');
+}
+
+function setup()
+{
+	map = Object.values(map);
+	
 	cnv = createCanvas(800, 800);
 	cnv.x = cnv.position().x;
 	cnv.y = cnv.position().y;
@@ -44,11 +53,7 @@ function setup() {
 	socket.on('hit',
 		function(data)
 		{
-			users[data[0]].health -= 10;
-			if(data[0] == socket.id)
-			{
-				attacker = data[1];
-			}
+			users[data].health -= 10;
 		}
 	);
 	
@@ -67,14 +72,20 @@ function setup() {
 	);
 }
 
-function draw() {
+function draw()
+{
 	background(100);
 	
 	noStroke();
 	fill(255);
 	textSize(16)
 	
-	
+	map.forEach(
+		function (o)
+		{
+			rect(o.x, o.y, o.w, o.h);
+		}
+	);
 	
 	var index = 0;
 	for(id in users)
@@ -96,7 +107,6 @@ function draw() {
 	if(reload > 0) reload--;
 	else if(mouseIsPressed && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height)
 	{
-		stroke(0);
 		strokeWeight(3);
 		
 		var p = users[socket.id];
@@ -104,6 +114,17 @@ function draw() {
 		var angle = createVector(mouseX - p.pos.x, mouseY - p.pos.y).heading();
 		var x = p.pos.x + cos(angle)* 1132;
 		var y = p.pos.y + sin(angle)* 1132;
+		
+		stroke(0);
+		for(i = 0; i < map.length; i++)
+		{
+			var o = map[i];
+			
+			if(!lineRect(p.pos.x, p.pos.y, x, y, o)) continue;
+			
+			stroke(255, 0, 0);
+			break;
+		}
 		
 		line(p.pos.x, p.pos.y, x, y);
 		
@@ -115,13 +136,13 @@ function draw() {
 				
 				if(lineCircle(p.pos.x, p.pos.y, x, y, op.pos.x, op.pos.y, 10))
 				{
-					socket.emit('hit', [id, socket.id]);
+					socket.emit('hit', id);
 					users[id].health -= 10;
 				}
 			}
 		}
 		
-		reload = 5;
+		reload = 0;
 	}
 	
 	var p = users[socket.id];
@@ -211,4 +232,45 @@ function lineCircle(x1, y1, x2, y2, cx, cy, r)
 			return true; // | -|->
 	}
 	return false;
+}
+
+function lineLine(x1, y1, x2, y2, x3, y3, x4, y4) {
+
+	// calculate the direction of the lines
+	var uA = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+	var uB = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+
+	// if uA and uB are between 0-1, lines are colliding
+	
+	return uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1;
+	
+	//Calculate position
+	/*if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1)
+	{
+
+		// optionally, draw a circle where the lines meet
+		var intersectionX = x1 + (uA * (x2 - x1));
+		var intersectionY = y1 + (uA * (y2 - y1));
+		fill(255, 0, 0);
+		noStroke();
+		ellipse(intersectionX, intersectionY, 20, 20);
+
+		return true;
+	}
+	return false;*/
+}
+
+function lineRect(x1, y1, x2, y2, r) {
+	
+	var left = lineLine(x1, y1, x2, y2, r.x, r.y, r.x, r.y + r.h);
+	if(left) return true;
+	
+	var right = lineLine(x1, y1, x2, y2, r.x + r.w, r.y, r.x + r.w, r.y + r.h);
+	if(right) return true;
+	
+	var top = lineLine(x1, y1, x2, y2, r.x, r.y, r.x + r.w, r.y);
+	if(top) return true;
+	
+	var bottom = lineLine(x1, y1, x2, y2, r.x, r.y + r.h, r.x + r.w, r.y + r.h);
+	return bottom;
 }
