@@ -12,16 +12,18 @@ let reloading = 0;
 let reload = 5;
 let ammo = 30;
 
-
 let weapon;
 
 let map, weapons;
 
+let iCrosshair;
 
 function preload()
 {
 	map = loadJSON('settings/map.json');
 	weapons = loadJSON('settings/weapons.json');
+	
+	iCrosshair = loadImage('images/crosshair.png');
 }
 
 function setup()
@@ -39,6 +41,8 @@ function setup()
 	nameInput.position(cnv.x, cnv.y-23);
 	nameInput.size(200);
 	
+	noCursor();
+	
 	//#region Networking
 	
 	socket = io.connect();
@@ -54,6 +58,13 @@ function setup()
 		function(data)
 		{
 			users[data[0]].pos = data[1];
+		}
+	);
+	
+	socket.on('angle',
+		function(data)
+		{
+			users[data[0]].angle = data[1];
 		}
 	);
 	
@@ -115,49 +126,69 @@ function draw()
 			_x = p.pos.x + _x * 5 - 10;
 			_y = p.pos.y + _y * 5 - 10;
 			
-			var _col = false;
+			var _colx = false;
+			var _coly = false;
 			
-			for (i = 0; i < map.length; i++)
+			for(i = 0; i < map.length; i++)
 			{
-				if(!rectRect(_x, _y, 20, 20, map[i])) continue;
-				
-				_col = true;
-				break;
+				if(rectRect(_x, p.pos.y - 10, 20, 20, map[i]))
+				{
+					_colx = true;
+					break;
+				}
 			}
 			
-			if(!_col)
+			for(i = 0; i < map.length; i++)
 			{
+				if (rectRect(p.pos.x - 10, _y, 20, 20, map[i]))
+				{
+					_coly = true;
+					break;
+				}
+			}
+			
+			if(!_colx)
 				p.pos.x = _x + 10;
+			if(!_coly)
 				p.pos.y = _y + 10;
-				
-				socket.emit('position', p.pos);
-			}
+			
+			socket.emit('position', p.pos);
 		}
 		
 		var angle = createVector(mouseX - p.pos.x, mouseY - p.pos.y).heading();
 		var x = cos(angle);
 		var y = sin(angle);
-
-		stroke(0);
-		strokeWeight(3);
-		line(p.pos.x, p.pos.y, p.pos.x + x * 15, p.pos.y + y * 15);
+		
+		p.angle = angle;
+		socket.emit('angle', angle);
 	}
 	
-	noStroke();
+	textAlign(LEFT, TOP);
 	ellipseMode(RADIUS);
 	var index = 0;
 	for(id in users)
 	{
 		var op = users[id];
 		
+		stroke(0);
+		strokeWeight(3);
+		line(op.pos.x, op.pos.y, op.pos.x + cos(op.angle) * 15, op.pos.y + sin(op.angle) * 15);
+
+		noStroke();
 		circle(op.pos.x, op.pos.y, 10);
 		text(op.name, 5, 15 + index*20);
 		
+		strokeWeight(1);
+		stroke(0);
 		fill(0);
 		rect(op.pos.x - 20, op.pos.y + 15, 40, 10);
 		
 		fill(255);
 		rect(op.pos.x - 20, op.pos.y + 15, op.health/100 * 40, 10);
+		
+		textAlign(CENTER, BOTTOM);
+		textSize(16);
+		text(op.name, op.pos.x, op.pos.y - 15);
 		
 		index++;
 	}
@@ -192,6 +223,10 @@ function draw()
 				if (lineRect(p.pos.x, p.pos.y, x, y, _r))
 					_col = min(sq(_r.x + _r.w/2 - p.pos.x) + sq(_r.y + _r.h/2 - p.pos.y), _col);
 			}
+			
+			stroke(0);
+			strokeWeight(1);
+			line(p.pos.x, p.pos.y, x, y);
 			
 			for (id in users)
 			{
@@ -247,7 +282,7 @@ function draw()
 		}
 	}
 
-	stroke(255);
+	stroke(0);
 	strokeWeight(2);
 	noFill();
 	
@@ -279,6 +314,7 @@ function draw()
 		text(ammo, width - 40, height - 55);
 	}
 	
+	image(iCrosshair, mouseX-4, mouseY-4);
 	
 	//#endregion
 }
@@ -298,10 +334,7 @@ function keyPressed()
 		
 }
 
-function clamp(value, minimum, maximum)
-{
-	return max(min(value, maximum), minimum);
-}
+//#region Collision
 
 function lineCircle(x1, y1, x2, y2, cx, cy, r)
 {
@@ -383,3 +416,10 @@ function rectRect(r1x, r1y, r1w, r1h, r2){
 		   r1x       <= r2.x + r2.w &&    // r1 left edge past r2 right
 		   r1y       <= r2.y + r2.h       // r1 bottom edge past r2 top
 }
+
+//#endregion
+
+//#region Classes
+
+
+//#endregion

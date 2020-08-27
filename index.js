@@ -28,6 +28,14 @@ io.sockets.on('connection',
             }
         );
         
+        socket.on('angle',
+            function(data)
+            {
+                users[socket.id].angle = data;
+                socket.broadcast.emit('angle', [socket.id, data]);
+            }
+        );
+        
         socket.on('sendName',
             function(data)
             {
@@ -74,7 +82,8 @@ class User
     constructor()
     {
         this.pos = { x: 400, y: 400 };
-        this.name = "";
+        this.angle = 0;
+        this.name = "username";
         this.health = 100;
         this.kills = 0;
         this.deaths = 0;
