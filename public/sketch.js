@@ -16,20 +16,25 @@ let weapon;
 
 let map, weapons;
 
-let iCrosshair;
+let crosshair, shootSound;
 
 function preload()
 {
 	map = loadJSON('settings/map.json');
 	weapons = loadJSON('settings/weapons.json');
 	
-	iCrosshair = loadImage('images/crosshair.png');
+	crosshair = loadImage('media/crosshair.png');
+	shootSound = loadSound('media/shoot.wav');
+	
 }
 
 function setup()
 {
 	map = Object.values(map);
 	weapons = Object.values(weapons);
+	
+	shootSound.setVolume(0.2);
+	
 	
 	weapon = weapons[0];
 	
@@ -206,6 +211,7 @@ function draw()
 		if(reload > 0) reload--;
 		else if(mouseIsPressed && ammo > 0 && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height)
 		{
+			shootSound.play();
 			ammo--;
 			
 			x *= 1366;
@@ -314,7 +320,7 @@ function draw()
 		text(ammo, width - 40, height - 55);
 	}
 	
-	image(iCrosshair, mouseX-4, mouseY-4);
+	image(crosshair, mouseX-4, mouseY-4);
 	
 	//#endregion
 }
