@@ -143,6 +143,7 @@ function draw()
 		line(p.pos.x, p.pos.y, p.pos.x + x * 15, p.pos.y + y * 15);
 	}
 	
+	noStroke();
 	ellipseMode(RADIUS);
 	var index = 0;
 	for(id in users)
@@ -164,45 +165,43 @@ function draw()
 	//#region GUNZZ !!1!1!1
 	
 	if(reloading > 0) reloading--;
-	else if(reloading == 0)
+	else if(reloading === 0)
 	{
 		ammo = weapon.ammo;
 		reloading = -1;
 	}
-	
-	if(reload > 0) reload--;
-	else if(mouseIsPressed && ammo > 0 && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height)
+	else
 	{
-		ammo--;
-		
-		x *= 1366;
-		y *= 1366;
-		
-		x += p.pos.x;
-		y += p.pos.y;
-		
-		var collision = false;
-		
-		for(i = 0; i < map.length; i++)
+		if(reload > 0) reload--;
+		else if(mouseIsPressed && ammo > 0 && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height)
 		{
-			var _r = map[i];
+			ammo--;
 			
-			var _col = lineRect(p.pos.x, p.pos.y, x, y, _r);
-			if(_col)
+			x *= 1366;
+			y *= 1366;
+			
+			x += p.pos.x;
+			y += p.pos.y;
+			
+			var _col = Infinity;
+			
+			for(i = 0; i < map.length; i++)
 			{
-				collision = {};
-				break;
-			};
-		}
-		
-		if(!collision)
-		{
+				var _r = map[i];
+				
+				if (lineRect(p.pos.x, p.pos.y, x, y, _r))
+					_col = min(sq(_r.x + _r.w/2 - p.pos.x) + sq(_r.y + _r.h/2 - p.pos.y), _col);
+			}
+			
 			for (id in users)
 			{
 				if (id != socket.id)
 				{
 					var op = users[id];
 
+					//Check for distance between me and other
+					if(sq(op.pos.x - p.pos.x) + sq(op.pos.y - p.pos.y) > _col) continue;
+					
 					if (lineCircle(p.pos.x, p.pos.y, x, y, op.pos.x, op.pos.y, 10))
 					{
 						socket.emit('hit', id);
@@ -210,9 +209,9 @@ function draw()
 					}
 				}
 			}
+			
+			reload = weapon.reload;
 		}
-		
-		reload = weapon.reload;
 	}
 	
 	//#endregion
