@@ -12,5 +12,8 @@
     "express": "^4.17.1",
     "node": "^14.8.0",
     "socket.io": "^2.3.0"
+  },
+  "repository": {
+    "url": "https://github.com/davawen/shooter"
   }
 }

@@ -51,6 +51,20 @@ function setup() {
 			}
 		}
 	);
+	
+	socket.on('death',
+		function(data)
+		{
+			var u = users[data[0]];
+
+			u.pos.x = 400;
+			u.pos.y = 400;
+			u.health = 100;
+
+			u.deaths++;
+			users[data[1]].kills++;
+		}
+	);
 }
 
 function draw() {
@@ -124,17 +138,6 @@ function draw() {
 			
 			socket.emit('position', p.pos);
 		}	
-		
-		if(p.health <= 0)
-		{
-			socket.emit('died', attacker);
-			p.pos.x = 400;
-			p.pos.y = 400;
-			p.health = 100;
-			
-			p.deaths++;
-			users[attacker].kills++;
-		}
 	}
 	
 	var scoreboard = keyIsDown(222);
