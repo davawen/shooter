@@ -10,7 +10,7 @@ let visibility = true;
 
 let reloading = 0;
 let reload = 5;
-let ammo = 30;
+let ammo = [];
 
 let bulletLines = [];
 
@@ -71,11 +71,15 @@ function setup()
 	map = Object.values(map);
 	weapons = Object.values(weapons);
 	
-	shootSound.setVolume(0.2);
-	
-
 	currentWeapon = 0;
 	weapon = weapons[currentWeapon];
+	
+	for(i = 0; i < weapons.length; i++)
+	{
+		ammo[i] = weapons[i].ammo;
+	}
+	
+	shootSound.setVolume(0.2);
 	
 	cnv = createCanvas(800, 800);
 	cnv.x = cnv.position().x;
@@ -282,16 +286,16 @@ function draw()
 	if(reloading > 0) reloading--;
 	else if(reloading === 0)
 	{
-		ammo = weapon.ammo;
+		ammo[currentWeapon] = weapon.ammo;
 		reloading = -1;
 	}
 	else
 	{
 		if(reload > 0) reload--;
-		else if(mouseIsPressed && ammo > 0 && mouseY > 0)
+		else if(mouseIsPressed && ammo[currentWeapon] > 0 && mouseY > 0)
 		{
 			shootSound.play();
-			ammo--;
+			ammo[currentWeapon]--;
 			
 			var x = cos(angle)*1366;
 			var y = sin(angle)*1366;
@@ -396,6 +400,16 @@ function draw()
 	rect(width - 35, height - 5, 30, -(1 - reload / weapon.reload) * 50);
 	
 	
+	rect(width - 70, height - 30, 30, 25);
+	
+	push();
+	
+	translate(width - 55, height - 17.5);
+	rotate(-PI/4);
+
+	image(weaponSprites[weapon.sprite], -7.5, -2.5);
+	
+	pop();
 	
 	if(reloading > 0)
 	{
@@ -409,11 +423,11 @@ function draw()
 	if(visibility)
 	{
 		textSize(28);
-		textAlign(RIGHT, TOP);
+		textAlign(LEFT, TOP);
 
 		stroke(0);
 
-		text(ammo, width - 40, height - 55);
+		text(ammo[currentWeapon], width - 70, height - 60);
 	}
 	
 	image(crosshair, mouseX-11, mouseY-12);
