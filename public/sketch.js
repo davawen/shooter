@@ -12,9 +12,10 @@ let reloading = 0;
 let reload = 5;
 let ammo = 30;
 
-let weapon;
+let weapon, currentWeapon;
 
 let map, weapons;
+let weaponSprites = [];
 
 let crosshair, shootSound;
 
@@ -26,6 +27,12 @@ function preload()
 	crosshair = loadImage('media/crosshair.png');
 	shootSound = loadSound('media/shoot.wav');
 	
+	for(i = 0; i < 1; i++)
+	{
+		var url = 'media/weapon' + i + '.png';
+		
+		weaponSprites[i] = loadImage(url);
+	}
 }
 
 function setup()
@@ -35,8 +42,9 @@ function setup()
 	
 	shootSound.setVolume(0.2);
 	
-	
-	weapon = weapons[0];
+
+	currentWeapon = 0;
+	weapon = weapons[currentWeapon];
 	
 	cnv = createCanvas(800, 800);
 	cnv.x = cnv.position().x;
@@ -63,6 +71,13 @@ function setup()
 		data =>
 		{
 			users[data[0]].pos = data[1];
+		}
+	);
+	
+	socket.on('weapon',
+		data =>
+		{
+			users[data[0]] = data[1];
 		}
 	);
 	
@@ -102,6 +117,19 @@ function setup()
 	);
 	
 	//#endregion
+}
+
+function mouseWheel()
+{
+	var d = Math.sign(event.delta);
+	
+	currentWeapon += d;
+	if(currentWeapon < 0) currentWeapon = weapons.length-1;
+	else if(currentWeapon > weapons.length-1) currentWeapon = 0;
+	
+	socket.emit('weapon', currentWeapon);
+	
+	weapon = weapons[currentWeapon];
 }
 
 function draw()
@@ -161,8 +189,6 @@ function draw()
 		}
 		
 		var angle = createVector(mouseX - p.pos.x, mouseY - p.pos.y).heading();
-		var x = cos(angle);
-		var y = sin(angle);
 		
 		p.angle = angle;
 		socket.emit('angle', angle);
@@ -174,14 +200,23 @@ function draw()
 	for(id in users)
 	{
 		var op = users[id];
-		
-		stroke(0);
-		strokeWeight(3);
-		line(op.pos.x, op.pos.y, op.pos.x + cos(op.angle) * 15, op.pos.y + sin(op.angle) * 15);
 
 		noStroke();
+		
 		circle(op.pos.x, op.pos.y, 10);
 		text(op.name, 5, 15 + index*20);
+		
+		push();
+		
+		translate(op.pos.x, op.pos.y)
+		rotate(op.angle);
+		
+		translate(10, 0);
+		
+		var sprite = weaponSprites[weapons[op.weapon].sprite];
+		image(sprite, 0, -2.5);
+		
+		pop()
 		
 		strokeWeight(1);
 		stroke(0);
@@ -214,8 +249,8 @@ function draw()
 			shootSound.play();
 			ammo--;
 			
-			x *= 1366;
-			y *= 1366;
+			var x = cos(angle)*1366;
+			var y = sin(angle)*1366;
 			
 			x += p.pos.x;
 			y += p.pos.y;

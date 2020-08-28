@@ -3,6 +3,8 @@
         "reload": 5,
         "damage": 5,
         "ammo": 30,
-        "reloading": 90
+        "reloading": 90,
+        "manual": false,
+        "sprite": 0
     }
 ]

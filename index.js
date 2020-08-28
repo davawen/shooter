@@ -36,6 +36,14 @@ io.sockets.on('connection',
             }
         );
         
+        socket.on('weapon',
+            data =>
+            {
+                users[socket.id].weapon = data;
+                socket.broadcast.emit('weapon', [socket.id, data]);
+            }
+        );
+        
         socket.on('sendName',
             data =>
             {
@@ -83,6 +91,7 @@ class User
     {
         this.pos = { x: 400, y: 400 };
         this.angle = 0;
+        this.weapon = 0;
         this.name = "username";
         this.health = 100;
         this.kills = 0;
