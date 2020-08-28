@@ -12,6 +12,8 @@ let reloading = 0;
 let reload = 5;
 let ammo = 30;
 
+let bulletLines = [];
+
 let weapon, currentWeapon;
 
 let map, weapons;
@@ -78,6 +80,17 @@ function setup()
 		data =>
 		{
 			users[data[0]] = data[1];
+		}
+	);
+	
+	socket.on('shoot',
+		data =>
+		{
+			stroke(0);
+			strokeWeight(0);
+
+			var op = users[data[0]];
+			line(op.pos.x, op.pos.y, data[1], data[2]);
 		}
 	);
 	
@@ -268,6 +281,8 @@ function draw()
 			stroke(0);
 			strokeWeight(1);
 			line(p.pos.x, p.pos.y, x, y);
+			
+			socket.emit('shoot', [x, y]);
 			
 			for (id in users)
 			{
@@ -462,5 +477,9 @@ function rectRect(r1x, r1y, r1w, r1h, r2){
 
 //#region Classes
 
+class BulletLine
+{
+	
+}
 
 //#endregion

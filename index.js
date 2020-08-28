@@ -44,6 +44,13 @@ io.sockets.on('connection',
             }
         );
         
+        socket.on('shoot',
+            data =>
+            {
+                socket.broadcast.emit('shoot', [socket.id, data[0], data[1]]);
+            }
+        );
+        
         socket.on('sendName',
             data =>
             {
