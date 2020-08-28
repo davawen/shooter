@@ -164,7 +164,7 @@ function draw()
 	
 	if(p)
 	{
-		var _x = keyIsDown(68) - keyIsDown(65);
+		var _x = keyIsDown(68) - (keyIsDown(65) || keyIsDown(81));
 		var _y = keyIsDown(83) - (keyIsDown(90) || keyIsDown(87));
 
 		if (_x || _y)
@@ -479,7 +479,18 @@ function rectRect(r1x, r1y, r1w, r1h, r2){
 
 class BulletLine
 {
+	constructor(x1, y1, x2, y2)
+	{
+		this.x1 = x1;
+		this.y1 = y1;
+		this.x2 = x2;
+		this.y2 = y2;
+	}
 	
+	draw()
+	{
+		
+	}
 }
 
 //#endregion
