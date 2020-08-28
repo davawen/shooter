@@ -1,7 +1,7 @@
 [
     {
         "reload": 5,
-        "damage": 10,
+        "damage": 5,
         "ammo": 30,
         "reloading": 90
     }

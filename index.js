@@ -21,7 +21,7 @@ io.sockets.on('connection',
         io.emit('users', users);
         
         socket.on('position',
-            function(data)
+            data =>
             {
                 users[socket.id].pos = data;
                 socket.broadcast.emit('position', [socket.id, data]);
@@ -29,7 +29,7 @@ io.sockets.on('connection',
         );
         
         socket.on('angle',
-            function(data)
+            data =>
             {
                 users[socket.id].angle = data;
                 socket.broadcast.emit('angle', [socket.id, data]);
@@ -37,7 +37,7 @@ io.sockets.on('connection',
         );
         
         socket.on('sendName',
-            function(data)
+            data =>
             {
                 users[socket.id].name = data;
                 socket.broadcast.emit('sendName', [socket.id, data]);
@@ -45,7 +45,7 @@ io.sockets.on('connection',
         );
         
         socket.on('hit',
-            function(data)
+            data =>
             {
                 var u = users[data];
                 u.health -= 10;
@@ -66,7 +66,7 @@ io.sockets.on('connection',
         );
         
         socket.on('disconnect',
-            function()
+            () =>
             {
                 delete users[socket.id];
                 numUsers--;

@@ -53,42 +53,42 @@ function setup()
 	socket = io.connect();
 	
 	socket.on('users',
-		function(data)
+		data =>
 		{
 			users = data;
 		}
 	);
 	
 	socket.on('position',
-		function(data)
+		data =>
 		{
 			users[data[0]].pos = data[1];
 		}
 	);
 	
 	socket.on('angle',
-		function(data)
+		data =>
 		{
 			users[data[0]].angle = data[1];
 		}
 	);
 	
 	socket.on('sendName',
-		function(data)
+		data =>
 		{
 			users[data[0]].name = data[1];
 		}
 	);
 	
 	socket.on('hit',
-		function(data)
+		data =>
 		{
 			users[data].health -= 10;
 		}
 	);
 	
 	socket.on('death',
-		function(data)
+		data =>
 		{
 			var u = users[data[0]];
 
@@ -113,7 +113,7 @@ function draw()
 	textSize(16)
 
 	map.forEach(
-		function (_r)
+		_r =>
 		{
 			rect(_r.x, _r.y, _r.w, _r.h);
 		}
