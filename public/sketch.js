@@ -37,6 +37,35 @@ function preload()
 	}
 }
 
+//#region Classes
+
+class BulletLine
+{
+	constructor(x1, y1, x2, y2)
+	{
+		this.x1 = x1;
+		this.y1 = y1;
+		this.x2 = x2;
+		this.y2 = y2;
+
+		this.t = 0;
+	}
+
+	draw()
+	{
+		stroke(0);
+		strokeWeight(1);
+		line(this.x1, this.y1, this.x2, this.y2);
+
+		this.x1 = lerp(this.x1, this.x2, 0.05);
+		this.y1 = lerp(this.y1, this.y2, 0.05);
+
+		this.t++;
+	}
+}
+
+//#endregion
+
 function setup()
 {
 	map = Object.values(map);
@@ -89,8 +118,10 @@ function setup()
 			stroke(0);
 			strokeWeight(0);
 
+			console.log(data);
+			
 			var op = users[data[0]];
-			line(op.pos.x, op.pos.y, data[1], data[2]);
+			bulletLines.push(new BulletLine(op.pos.x, op.pos.y, data[1], data[2]));
 		}
 	);
 	
@@ -257,7 +288,7 @@ function draw()
 	else
 	{
 		if(reload > 0) reload--;
-		else if(mouseIsPressed && ammo > 0 && mouseX > 0 && mouseX < width && mouseY > 0 && mouseY < height)
+		else if(mouseIsPressed && ammo > 0 && mouseY > 0)
 		{
 			shootSound.play();
 			ammo--;
@@ -278,9 +309,7 @@ function draw()
 					_col = min(sq(_r.x + _r.w/2 - p.pos.x) + sq(_r.y + _r.h/2 - p.pos.y), _col);
 			}
 			
-			stroke(0);
-			strokeWeight(1);
-			line(p.pos.x, p.pos.y, x, y);
+			bulletLines.push(new BulletLine(p.pos.x, p.pos.y, x, y));
 			
 			socket.emit('shoot', [x, y]);
 			
@@ -306,6 +335,23 @@ function draw()
 	}
 	
 	//#endregion
+	//#region Bullets
+	
+	for(i = 0; i < bulletLines.length; i++)
+	{
+		var bl = bulletLines[i];
+		
+		bl.draw();
+		if(bl.t >= 10)
+		{
+			bulletLines.splice(i, 1);
+			i--;
+		}
+	}
+	
+	//#endregion
+	
+	
 	//#region UI
 	
 	var scoreboard = keyIsDown(222);
@@ -471,26 +517,6 @@ function rectRect(r1x, r1y, r1w, r1h, r2){
 		   r1y + r1h >= r2.y        &&    // r1 top edge past r2 bottom
 		   r1x       <= r2.x + r2.w &&    // r1 left edge past r2 right
 		   r1y       <= r2.y + r2.h       // r1 bottom edge past r2 top
-}
-
-//#endregion
-
-//#region Classes
-
-class BulletLine
-{
-	constructor(x1, y1, x2, y2)
-	{
-		this.x1 = x1;
-		this.y1 = y1;
-		this.x2 = x2;
-		this.y2 = y2;
-	}
-	
-	draw()
-	{
-		
-	}
 }
 
 //#endregion
